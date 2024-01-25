@@ -1,23 +1,23 @@
-# Pull Request dashboard
+# Pull Request Dashboard
 
-The purpose of this project is to provide a readable and concise dashboard to open Pull Requests on GitHub. It is built to be a single HTML page for simple, local (secure) use. The page is also hosted on GitHub Pages.
+This project aims to provide a clear and concise dashboard for open Pull Requests on GitHub. It is designed as a single HTML page for straightforward, local, and secure use. The page is also available on GitHub Pages.
 
 ## Usage
 
-1. Create a classic GitHub Personal Access token with read rights to `repo` scope in all organizations you wish to track
-2. Open `pr-radiator.html` and use the UI
+1. Generate a standard GitHub Personal Access Token with read access to the `repo` scope across all organizations you wish to monitor.
+2. Open `pr-radiator.html` or visit [sampsakuronen.github.io/terrific-status-updater/pr-radiator.html](https://sampsakuronen.github.io/terrific-status-updater/pr-radiator.html) and follow the user interface instructions.
 
 ## Contributing
 
-Fork the repository and submit a pull request. As a reward you get your name on this readme. Issues can also be raised although I only spend time on this project if GitHub changes the API in a breaking way.
+To contribute, fork the repository and submit a pull request. As a token of appreciation, your name will be added to this README. You can also raise issues. However, please note that time is only allocated to this project if GitHub makes a breaking change to the API.
 
-### Technical guidelines
+### Technical Guidelines
 
-- Single file
-- Doesn't do requests besides GitHub PR API
-- No build: no preprocessors, fancy
-- No dependencies
-- Runs on a modern browser (so you can assume modern browser functionalities)
+- The project is contained in a single file.
+- The only requests made are to the GitHub PR API.
+- There is no build process: no preprocessors or fancy build tools are used.
+- The project has no dependencies.
+- The project runs on a modern browser, so you can assume modern browser functionalities are available.
 
 ## Contributors
 
