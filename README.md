@@ -4,9 +4,8 @@ The purpose of this project is to provide a readable and concise dashboard to op
 
 ## Usage
 
-1. Open `pr-radiator.html`
-2. Authenticate with GitHub
-3. Add the repositories you would like to follow
+1. Create a classic GitHub Personal Access token with read rights to `repo` scope in all organizations you wish to track
+2. Open `pr-radiator.html` and use the UI
 
 ## Contributing
 
