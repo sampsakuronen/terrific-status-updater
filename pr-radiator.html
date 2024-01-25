@@ -8,7 +8,7 @@
         padding: 0;
         width: 100vw;
         box-sizing: border-box;
-        font-family: Arial, sans-serif;
+        font-family: Helvetica, Arial, sans-serif;
         background-color: #000;
       }
 
@@ -38,7 +38,7 @@
 
       #prContainer {
         display: grid;
-        grid-template-columns: repeat(auto-fill, 300px);
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
         gap: 10px;
         padding: 10px;
         justify-content: center;
@@ -53,7 +53,32 @@
         opacity: 0;
         animation: fadeIn 1s forwards;
         width: 100%;
-        max-width: 300px;
+        word-wrap: break-word;
+        display: grid;
+        grid-template-areas:
+          "repo ."
+          "title title"
+          "branch branch";
+      }
+
+      .repo-name {
+        grid-area: repo;
+        align-self: start;
+        justify-self: end;
+        font-size: 1em;
+      }
+
+      .title {
+        grid-area: title;
+        font-size: 1.2em;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .branch-name {
+        grid-area: branch;
+        font-size: 1em;
       }
 
       .pr-card.blue {
@@ -241,6 +266,8 @@
           })
             .then((response) => response.json())
             .then((data) => {
+              data.sort((a, b) => b.number - a.number);
+
               const prContainer = document.getElementById("prContainer");
               const existingCards = Array.from(
                 prContainer.getElementsByClassName("pr-card")
@@ -249,11 +276,32 @@
                   card.getElementsByClassName("repo-name")[0].innerText ===
                   repoName
               );
-              existingCards.forEach((card) => prContainer.removeChild(card));
 
-              data.forEach((pr) => addPRToCard(repoName, pr));
+              data.forEach((pr) => {
+                const existingCard = existingCards.find(
+                  (card) => card.dataset.prId === pr.id.toString()
+                );
+
+                if (existingCard) {
+                  updateCard(existingCard, pr);
+                } else {
+                  addPRToCard(repoName, pr);
+                }
+              });
+
+              existingCards
+                .filter(
+                  (card) =>
+                    !data.some((pr) => pr.id.toString() === card.dataset.prId)
+                )
+                .forEach((card) => prContainer.removeChild(card));
             });
         });
+      }
+
+      function updateCard(card, pr) {
+        card.getElementsByClassName("title")[0].innerText = pr.title;
+        card.getElementsByClassName("branch-name")[0].innerText = pr.head.ref;
       }
 
       window.onload = function () {
@@ -264,7 +312,7 @@
         updatePRs();
       };
 
-      setInterval(updatePRs, 60000);
+      setInterval(updatePRs, 5000);
     </script>
   </body>
 </html>
