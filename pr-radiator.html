@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>PR Radiator</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100vw;
+        box-sizing: border-box;
+        font-family: Arial, sans-serif;
+        background-color: #000;
+      }
+
+      .logout,
+      .add-token,
+      .add-repo {
+        display: inline-block;
+        margin: 10px;
+      }
+
+      input[type="text"],
+      button {
+        margin: 5px;
+        padding: 10px;
+        font-size: 16px;
+      }
+
+      button {
+        background-color: #f0f0f0; /* Pastel button color */
+        border: none;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: #e0e0e0;
+      }
+
+      #prContainer {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, 300px);
+        gap: 10px;
+        padding: 10px;
+        justify-content: center;
+      }
+
+      .pr-card {
+        box-sizing: border-box;
+        padding: 20px;
+        border: none; /* Remove border */
+        border-radius: 2px;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        opacity: 0;
+        animation: fadeIn 1s forwards;
+        width: 100%;
+        max-width: 300px;
+      }
+
+      .pr-card.blue {
+        background-color: #428ac8;
+      }
+
+      .pr-card.red {
+        background-color: #c84242;
+      }
+
+      .repo-name,
+      .title,
+      .branch-name {
+        margin-bottom: 10px;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      @keyframes fadeOut {
+        from {
+          opacity: 1;
+        }
+        to {
+          opacity: 0;
+        }
+      }
+
+      @keyframes pulseBlue {
+        0% {
+          background-color: #428ac8;
+        }
+        50% {
+          background-color: #72a2c8;
+        }
+        100% {
+          background-color: #428ac8;
+        }
+      }
+
+      @keyframes pulseRed {
+        0% {
+          background-color: #c84242;
+        }
+        50% {
+          background-color: #c87272;
+        }
+        100% {
+          background-color: #c84242;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="prContainer"></div>
+    <div class="logout">
+      <button onclick="logout()">Logout</button>
+    </div>
+    <div class="add-token">
+      <input type="text" id="tokenInput" placeholder="Enter GitHub token" />
+      <button onclick="saveToken()">Save Token</button>
+    </div>
+    <div class="add-repo">
+      <input type="text" id="repoInput" placeholder="Enter repository name" />
+      <button onclick="addRepo()">Add Repository</button>
+    </div>
+    <script>
+      let repos = [];
+      let token = localStorage.getItem("token") || "";
+
+      function saveToken() {
+        token = document.getElementById("tokenInput").value;
+        localStorage.setItem("token", token);
+      }
+
+      function logout() {
+        localStorage.removeItem("token");
+        token = "";
+      }
+
+      document
+        .getElementById("tokenInput")
+        .addEventListener("keydown", function (e) {
+          if (e.key === "Enter") {
+            saveToken();
+          }
+        });
+
+      document
+        .getElementById("repoInput")
+        .addEventListener("keydown", function (e) {
+          if (e.key === "Enter") {
+            addRepo();
+          }
+        });
+
+      function addRepo() {
+        const repoInput = document.getElementById("repoInput");
+        const repoName = repoInput.value;
+        repoInput.value = "";
+
+        if (repos.length >= 20) {
+          alert("Maximum number of repositories reached");
+          return;
+        }
+
+        fetch(`https://api.github.com/repos/${repoName}/pulls`, {
+          headers: {
+            Authorization: `token ${token}`,
+            Accept: "application/vnd.github.v3+json",
+          },
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Repository not found");
+            }
+            return response.json();
+          })
+          .then((data) => {
+            repos.push(repoName);
+            localStorage.setItem("repos", JSON.stringify(repos));
+            data.forEach((pr) => addPRToCard(repoName, pr));
+          })
+          .catch((error) => alert(error.message));
+      }
+
+      function addPRToCard(repoName, pr) {
+        const card = document.createElement("div");
+        card.className = "pr-card fade-in";
+        card.dataset.prId = pr.id;
+
+        const repoNameElement = document.createElement("div");
+        repoNameElement.className = "repo-name";
+        repoNameElement.innerText = repoName;
+        card.appendChild(repoNameElement);
+
+        const titleElement = document.createElement("div");
+        titleElement.className = "title";
+        titleElement.innerText = pr.title;
+        card.appendChild(titleElement);
+
+        const branchNameElement = document.createElement("div");
+        branchNameElement.className = "branch-name";
+        branchNameElement.innerText = pr.head.ref;
+        card.appendChild(branchNameElement);
+
+        fetch(
+          `https://api.github.com/repos/${repoName}/commits/${pr.head.sha}/check-runs`,
+          {
+            headers: {
+              Authorization: `token ${token}`,
+              Accept: "application/vnd.github.v3+json",
+              Accept: "application/vnd.github.antiope-preview+json",
+            },
+          }
+        )
+          .then((response) => response.json())
+          .then((checkRuns) => {
+            const allChecksPassed = checkRuns.check_runs.every(
+              (checkRun) => checkRun.conclusion === "success"
+            );
+            card.className += allChecksPassed ? " blue" : " red";
+          })
+          .catch((error) => {
+            card.className += " gray";
+          });
+
+        const prContainer = document.getElementById("prContainer");
+        prContainer.appendChild(card);
+      }
+
+      function updatePRs() {
+        repos.forEach((repoName) => {
+          fetch(`https://api.github.com/repos/${repoName}/pulls`, {
+            headers: {
+              Authorization: `token ${token}`,
+              Accept: "application/vnd.github.v3+json",
+            },
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              const prContainer = document.getElementById("prContainer");
+              const existingCards = Array.from(
+                prContainer.getElementsByClassName("pr-card")
+              ).filter(
+                (card) =>
+                  card.getElementsByClassName("repo-name")[0].innerText ===
+                  repoName
+              );
+              existingCards.forEach((card) => prContainer.removeChild(card));
+
+              data.forEach((pr) => addPRToCard(repoName, pr));
+            });
+        });
+      }
+
+      window.onload = function () {
+        const savedRepos = JSON.parse(localStorage.getItem("repos"));
+        if (savedRepos) {
+          repos = savedRepos;
+        }
+        updatePRs();
+      };
+
+      setInterval(updatePRs, 60000);
+    </script>
+  </body>
+</html>
